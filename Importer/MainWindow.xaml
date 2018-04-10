@@ -1,0 +1,40 @@
+﻿<Window x:Class="Importer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Importer"
+        mc:Ignorable="d"
+        Title="Импорт" Height="600" Width="655">
+    <Grid>
+        <GridSplitter HorizontalAlignment="Left" Height="569" Margin="262,0,0,0" VerticalAlignment="Top" Width="5" IsEnabled="False"/>
+        <Button x:Name="templatesBtn" Content="Указать шаблоны разделов" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="247" Click="templatesBtn_Click"/>
+        <Button x:Name="csvFileBtn" Content="Указать csv файл" HorizontalAlignment="Left" Margin="10,232,0,0" VerticalAlignment="Top" Width="247" Click="csvFileBtn_Click"/>
+        <TextBox x:Name="csvFilePath" HorizontalAlignment="Left" Height="23" Margin="10,257,0,0" VerticalAlignment="Top" Width="247"/>
+        <ListBox x:Name="xmlTemplates" HorizontalAlignment="Left" Height="167" Margin="10,35,0,0" VerticalAlignment="Top" Width="247"/>
+
+        <Label Content="Id формы" HorizontalAlignment="Left" Margin="17,363,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="formId" HorizontalAlignment="Left" Height="23" Margin="167,363,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="85"/>
+        <Label Content="Период" HorizontalAlignment="Left" Margin="17,391,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="period" HorizontalAlignment="Left" Height="23" Margin="167,391,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="85"/>
+
+        <Grid x:Name="sectionsGrid" HorizontalAlignment="Left" Height="549" Margin="272,10,0,0" VerticalAlignment="Top" Width="360">
+            <Label Content="Разделы" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" FontWeight="Bold"/>
+            <TextBox x:Name="sectionId1" HorizontalAlignment="Left" Height="23" Margin="10,62,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="105"/>
+            <TextBox x:Name="dsdMoniker1" HorizontalAlignment="Left" Height="23" Margin="130,62,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="220"/>
+            <Label Content="Id" HorizontalAlignment="Left" Margin="50,31,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.6,0.538"/>
+            <Label Content="DsdMoniker" HorizontalAlignment="Left" Margin="215,31,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.473,0.5"/>
+            <Button x:Name="addSectionBtn" Content="Добавить раздел" HorizontalAlignment="Left" Margin="231,3,0,0" VerticalAlignment="Top" Width="119" Click="addSectionBtn_Click"/>
+            <StackPanel x:Name="sectionsIdStackPanel" HorizontalAlignment="Left" Height="427" Margin="10,90,0,0" VerticalAlignment="Top" Width="105"></StackPanel>
+            <StackPanel x:Name="dsdMonikerStackPanel" HorizontalAlignment="Left" Height="427" Margin="130,90,0,0" VerticalAlignment="Top" Width="219"></StackPanel>
+            <Button x:Name="importBtn" Content="Импортировать" HorizontalAlignment="Left" Margin="251,522,0,0" VerticalAlignment="Top" Width="100" Click="importBtn_Click"/>
+        </Grid>
+        <Label Content="Позиция ОКПО в строке" HorizontalAlignment="Left" Margin="17,419,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="okpoPosition" HorizontalAlignment="Left" Height="23" Margin="167,419,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="85"/>
+        <Label Content="Позиция СОАТЕ в строке" HorizontalAlignment="Left" Margin="17,447,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="soatePosition" HorizontalAlignment="Left" Height="23" Margin="167,447,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="85"/>
+        <Label x:Name="progressLbl" Content="" HorizontalAlignment="Left" Margin="17,473,0,0" VerticalAlignment="Top" Width="242" RenderTransformOrigin="0.5,0.5"/>
+        <ProgressBar x:Name="progress" HorizontalAlignment="Left" Height="23" Margin="17,503,0,0" VerticalAlignment="Top" Width="242"/>
+        
+    </Grid>
+</Window>
