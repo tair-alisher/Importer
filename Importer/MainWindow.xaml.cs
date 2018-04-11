@@ -20,6 +20,10 @@ namespace Importer
     {
         List<string> templatesPath = new List<string>();
         List<string> csvLines;
+
+        int okpoRowPosition;
+        int soateRowPosition;
+
         string csvFilename;
         public static int sectionId = 0;
 
@@ -66,8 +70,8 @@ namespace Importer
             sectionIdTxtBox.Width = 105;
             sectionIdTxtBox.Margin = new Thickness(0, 0, 0, 5);
 
-            int sectinoIndex = sectionsIdStackPanel.Children.Count - 1 > 0 ? sectionsIdStackPanel.Children.Count - 1 : 0;
-            sectionsIdStackPanel.Children.Insert(sectinoIndex, sectionIdTxtBox);
+            int sectinoIndex = sectionIdsStackPanel.Children.Count;
+            sectionIdsStackPanel.Children.Insert(sectinoIndex, sectionIdTxtBox);
 
             TextBox dsdMonikerTxtBox = new TextBox();
             dsdMonikerTxtBox.Name = $"dsdMoniker{MainWindow.sectionId}";
@@ -76,12 +80,22 @@ namespace Importer
             dsdMonikerTxtBox.Width = 219;
             dsdMonikerTxtBox.Margin = new Thickness(0, 0, 0, 5);
 
-            int dsdIndex = dsdMonikerStackPanel.Children.Count - 1 > 0 ? dsdMonikerStackPanel.Children.Count - 1 : 0;
+            int dsdIndex = dsdMonikerStackPanel.Children.Count;
             dsdMonikerStackPanel.Children.Insert(dsdIndex, dsdMonikerTxtBox);
         }
 
         private void importBtn_Click(object sender, RoutedEventArgs e)
         {
+            try
+            {
+                this.okpoRowPosition = int.Parse(okpoPosition.Text);
+                this.soateRowPosition = int.Parse(soatePosition.Text);
+            }
+            catch (FormatException)
+            {
+                MessageBox.Show("Положения СОАТЕ и ОКПО в строке заданы неверно");
+            }
+
             Csv csv = new Csv(csvFilename);
             csvLines = csv.GetLines();
             BackgroundWorker csvWorker = new BackgroundWorker();
@@ -99,19 +113,8 @@ namespace Importer
         void worker_RunSenderWorker(object sender, RunWorkerCompletedEventArgs e)
         {
             mapStatusLbl.Content = "ok";
-            int okpoRowPosition = 0;
-            int soateRowPosition = 0;
 
-            try
-            {
-                okpoRowPosition = int.Parse(okpoPosition.Text);
-                soateRowPosition = int.Parse(soatePosition.Text);
-            } catch (FormatException)
-            {
-                MessageBox.Show("Положения СОАТЕ и ОКПО в строке заданы неверно");
-            }
-
-            Sender senderObj = new Sender(csvLines, okpoRowPosition);
+            Sender senderObj = new Sender(csvLines, this.okpoRowPosition);
 
             BackgroundWorker senderWorker = new BackgroundWorker();
             senderProgressBar.Value = 0;
@@ -128,6 +131,41 @@ namespace Importer
         void worker_RunBuildXmlWorker(object sender, RunWorkerCompletedEventArgs e)
         {
             senderStatusLbl.Content = "ok";
+
+            if (xmlTemplates.Items.Count <= 0)
+                MessageBox.Show("Укажите шаблоны разделов");
+
+            XmlFormer xmlFormer = new XmlFormer(csvLines);
+
+            xmlFormer.okpoRowPosition = this.okpoRowPosition;
+            xmlFormer.soateRowPosition = this.soateRowPosition;
+            xmlFormer.FormId = Convert.ToInt32(formId.Text);
+            xmlFormer.PeriodType = Convert.ToInt32(period.Text);
+
+            List<int> sectionIds;
+            List<string> dsdMonikers;
+
+        }
+
+        private void testBtn_Click(object sender, RoutedEventArgs e)
+        {
+            List<int> result = new List<int>();
+            foreach (UIElement txtBox in sectionIdsStackPanel.Children)
+            {
+                try
+                {
+                    int value = Convert.ToInt32(((TextBox)txtBox).Text);
+                    result.Add(value);
+                } catch (FormatException)
+                {
+                    continue;
+                }
+
+                foreach (int item in result)
+                {
+                    Console.WriteLine(item);
+                }
+            }
         }
     }
 }
