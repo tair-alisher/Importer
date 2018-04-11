@@ -13,10 +13,10 @@
         <TextBox x:Name="csvFilePath" HorizontalAlignment="Left" Height="23" Margin="10,257,0,0" VerticalAlignment="Top" Width="247"/>
         <ListBox x:Name="xmlTemplates" HorizontalAlignment="Left" Height="167" Margin="10,35,0,0" VerticalAlignment="Top" Width="247"/>
 
-        <Label Content="Id формы" HorizontalAlignment="Left" Margin="17,363,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="formId" HorizontalAlignment="Left" Height="23" Margin="167,363,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="85"/>
-        <Label Content="Период" HorizontalAlignment="Left" Margin="17,391,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="period" HorizontalAlignment="Left" Height="23" Margin="167,391,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="85"/>
+        <Label Content="Id формы" HorizontalAlignment="Left" Margin="17,300,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="formId" HorizontalAlignment="Left" Height="23" Margin="167,300,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="85"/>
+        <Label Content="Период" HorizontalAlignment="Left" Margin="17,328,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="period" HorizontalAlignment="Left" Height="23" Margin="167,328,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="85"/>
 
         <Grid x:Name="sectionsGrid" HorizontalAlignment="Left" Height="549" Margin="272,10,0,0" VerticalAlignment="Top" Width="360">
             <Label Content="Разделы" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" FontWeight="Bold"/>
@@ -29,12 +29,21 @@
             <StackPanel x:Name="dsdMonikerStackPanel" HorizontalAlignment="Left" Height="427" Margin="130,90,0,0" VerticalAlignment="Top" Width="219"></StackPanel>
             <Button x:Name="importBtn" Content="Импортировать" HorizontalAlignment="Left" Margin="251,522,0,0" VerticalAlignment="Top" Width="100" Click="importBtn_Click"/>
         </Grid>
-        <Label Content="Позиция ОКПО в строке" HorizontalAlignment="Left" Margin="17,419,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="okpoPosition" HorizontalAlignment="Left" Height="23" Margin="167,419,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="85"/>
-        <Label Content="Позиция СОАТЕ в строке" HorizontalAlignment="Left" Margin="17,447,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="soatePosition" HorizontalAlignment="Left" Height="23" Margin="167,447,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="85"/>
-        <Label x:Name="progressLbl" Content="" HorizontalAlignment="Left" Margin="17,473,0,0" VerticalAlignment="Top" Width="242" RenderTransformOrigin="0.5,0.5"/>
-        <ProgressBar x:Name="progress" HorizontalAlignment="Left" Height="23" Margin="17,503,0,0" VerticalAlignment="Top" Width="242"/>
-        
+
+        <Label Content="Позиция ОКПО в строке" HorizontalAlignment="Left" Margin="17,356,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="okpoPosition" HorizontalAlignment="Left" Height="23" Margin="167,356,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="85"/>
+
+        <Label Content="Позиция СОАТЕ в строке" HorizontalAlignment="Left" Margin="17,384,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="soatePosition" HorizontalAlignment="Left" Height="23" Margin="167,384,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="85"/>
+
+        <Label Content="map.xml" HorizontalAlignment="Left" Margin="10,419,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5"/>
+        <ProgressBar x:Name="csvProgressBar" HorizontalAlignment="Left" Height="10" Margin="100,428,0,0" VerticalAlignment="Top" Width="138"/>
+        <Label x:Name="mapStatusLbl" Content="" HorizontalAlignment="Left" Margin="238,419,0,0" VerticalAlignment="Top"/>
+
+        <Label Content="senderIds.xml" HorizontalAlignment="Left" Margin="10,442,0,0" VerticalAlignment="Top"/>
+        <ProgressBar x:Name="senderProgressBar" HorizontalAlignment="Left" Height="10" Margin="100,451,0,0" VerticalAlignment="Top" Width="138"/>
+        <Label x:Name="senderStatusLbl" Content="" HorizontalAlignment="Left" Margin="238,442,0,0" VerticalAlignment="Top"/>
+
+
     </Grid>
 </Window>

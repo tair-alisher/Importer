@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
+using System.Text;
+using System.Windows;
+using System.Xml;
 
 namespace Importer.Main
 {
@@ -10,13 +14,19 @@ namespace Importer.Main
 
         public Csv(string file)
         {
-            using (StreamReader reader = new StreamReader(file))
+            try
             {
-                while(!reader.EndOfStream)
+                using (StreamReader reader = new StreamReader(file))
                 {
-                    string line = reader.ReadLine().Replace(" ", "");
-                    lines.Add(line);
+                    while (!reader.EndOfStream)
+                    {
+                        string line = reader.ReadLine().Replace(" ", "");
+                        lines.Add(line);
+                    }
                 }
+            } catch (System.ArgumentNullException)
+            {
+                MessageBox.Show("Укажите csv файл");
             }
         }
 
@@ -25,34 +35,38 @@ namespace Importer.Main
             return lines;
         }
 
-        public void BuildMapFile(System.Windows.Controls.ProgressBar progress)
+        public void worker_DoWork(Object sender, DoWorkEventArgs e)
         {
-            progress.Minimum = 0;
-            progress.Maximum = 1;
-            progress.Value = 0;
+            int progressPercentage;
 
-            string data;
-            string mapFilePath = String.Format(@"{0}Files\map.json", AppDomain.CurrentDomain.BaseDirectory);
-            TextWriter writer = new StreamWriter(mapFilePath);
-            writer.WriteLine("[");
+            string mapFilePath = String.Format(@"{0}Files\map.xml", AppDomain.CurrentDomain.BaseDirectory);
 
-            foreach (string line in lines)
+            XmlWriterSettings xmlSettings = new XmlWriterSettings();
+            xmlSettings.Indent = true;
+            xmlSettings.IndentChars = "\t";
+            xmlSettings.Encoding = Encoding.UTF8;
+
+            using (XmlWriter writer = XmlWriter.Create(mapFilePath, xmlSettings))
             {
-                string[] row = line.Split(',');
-                for (int i = 0; i < row.Length; i++)
-                {
-                    data = $@"   {{
-        ""key"": ""%{row[i]}%"",
-        ""value"": ""{i}""
-    }},";
-                    writer.WriteLine(data);
-                }
-                progress.Value++;
-                break;
-            }
+                writer.WriteStartDocument();
+                writer.WriteStartElement("Rows");
 
-            writer.WriteLine("]");
-            writer.Close();
+                string[] row = lines[0].Split(',');
+                int rowLength = row.Length;
+                for (int i = 0; i < rowLength; i++)
+                {
+                    writer.WriteStartElement("Row");
+                    writer.WriteAttributeString("key", row[i].ToString());
+                    writer.WriteAttributeString("value", i.ToString());
+                    writer.WriteEndElement();
+
+                    progressPercentage = Convert.ToInt32(((double)i / rowLength) * 100);
+                    (sender as BackgroundWorker).ReportProgress(progressPercentage);
+                }
+
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
+            }
         }
     }
 }

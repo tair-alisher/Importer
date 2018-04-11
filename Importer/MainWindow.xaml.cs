@@ -18,9 +18,8 @@ namespace Importer
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly BackgroundWorker worker = new BackgroundWorker();
-
         List<string> templatesPath = new List<string>();
+        List<string> csvLines;
         string csvFilename;
         public static int sectionId = 0;
 
@@ -84,25 +83,51 @@ namespace Importer
         private void importBtn_Click(object sender, RoutedEventArgs e)
         {
             Csv csv = new Csv(csvFilename);
-            List<string> lines = csv.GetLines();
+            csvLines = csv.GetLines();
+            BackgroundWorker csvWorker = new BackgroundWorker();
+            csvProgressBar.Value = 0;
+            csvWorker.WorkerReportsProgress = true;
+            csvWorker.DoWork += csv.worker_DoWork;
+            csvWorker.ProgressChanged += (senderObject, arguments) =>
+            {
+                csvProgressBar.Value = arguments.ProgressPercentage;
+            };
+            csvWorker.RunWorkerCompleted += worker_RunSenderWorker;
+            csvWorker.RunWorkerAsync();
+        }
 
-            progressLbl.Content = "Формирование файла map.json";
-            csv.BuildMapFile(progress);
-
-            int okpoRowPosition = int.Parse(okpoPosition.Text);
-            int soateRowPosition = int.Parse(soatePosition.Text);
-
-            progressLbl.Content = "Формирование идентификаторов";
+        void worker_RunSenderWorker(object sender, RunWorkerCompletedEventArgs e)
+        {
+            mapStatusLbl.Content = "ok";
+            int okpoRowPosition = 0;
+            int soateRowPosition = 0;
 
             try
             {
-                Sender senderObj = new Sender(lines, okpoRowPosition);
-                senderObj.BuildSenderIdsFile(progress);
-            } catch (Exception ex)
+                okpoRowPosition = int.Parse(okpoPosition.Text);
+                soateRowPosition = int.Parse(soatePosition.Text);
+            } catch (FormatException)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Положения СОАТЕ и ОКПО в строке заданы неверно");
             }
-            
+
+            Sender senderObj = new Sender(csvLines, okpoRowPosition);
+
+            BackgroundWorker senderWorker = new BackgroundWorker();
+            senderProgressBar.Value = 0;
+            senderWorker.WorkerReportsProgress = true;
+            senderWorker.DoWork += senderObj.worker_DoWork;
+            senderWorker.ProgressChanged += (senderObject, arguments) =>
+            {
+                senderProgressBar.Value = arguments.ProgressPercentage;
+            };
+            senderWorker.RunWorkerCompleted += worker_RunBuildXmlWorker;
+            senderWorker.RunWorkerAsync();
+        }
+
+        void worker_RunBuildXmlWorker(object sender, RunWorkerCompletedEventArgs e)
+        {
+            senderStatusLbl.Content = "ok";
         }
     }
 }

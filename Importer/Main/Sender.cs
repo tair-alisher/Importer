@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.ComponentModel;
+using System.Windows.Controls;
+using System.Xml;
+using System.Text;
 
 namespace Importer.Main
 {
@@ -20,46 +24,53 @@ namespace Importer.Main
             }
         }
 
-        public void BuildSenderIdsFile(System.Windows.Controls.ProgressBar progress)
+        public void worker_DoWork(Object sender, DoWorkEventArgs e)
         {
-            progress.Minimum = 0;
-            progress.Maximum = okpos.Count;
-            progress.Value = 0;
-
             SqlCommand command;
-            string data;
+            int progressPercentage;
+            int okposCount = okpos.Count;
 
-            string senderIdsFilePath = String.Format(@"{0}Files\sender_identifiers.json", AppDomain.CurrentDomain.BaseDirectory);
-            TextWriter writer = new StreamWriter(senderIdsFilePath);
-            writer.WriteLine("[");
+            string senderIdsFilePath = String.Format(@"{0}Files\sender_identifiers.xml", AppDomain.CurrentDomain.BaseDirectory);
 
             string connectionString = ConfigurationManager.ConnectionStrings["ServerConnection"].ConnectionString;
             SqlConnection connection = new SqlConnection(connectionString);
             connection.Open();
 
-            foreach (string okpo in okpos)
-            {
-                command = new SqlCommand("SELECT Id as id FROM AspNetUsers WHERE OKPO = @okpo", connection);
-                command.Parameters.AddWithValue("@okpo", okpo);
+            XmlWriterSettings xmlSettings = new XmlWriterSettings();
+            xmlSettings.Indent = true;
+            xmlSettings.IndentChars = "\t";
+            xmlSettings.Encoding = Encoding.UTF8;
 
-                using (SqlDataReader reader = command.ExecuteReader())
+            using (XmlWriter writer = XmlWriter.Create(senderIdsFilePath, xmlSettings))
+            {
+                writer.WriteStartDocument();
+                writer.WriteStartElement("Rows");
+
+                for (int i = 0; i < okposCount; i++)
                 {
-                    if (reader.Read())
+                    command = new SqlCommand("SELECT Id as id FROM AspNetUsers WHERE OKPO = @okpo", connection);
+                    command.Parameters.AddWithValue("@okpo", okpos[i]);
+
+                    using (SqlDataReader reader = command.ExecuteReader())
                     {
-                        data = $@"   {{
-        ""okpo"": ""{okpo}"",
-        ""sender_id"": ""{reader["id"].ToString()}""
-    }},";
-                        writer.WriteLine(data);
+                        if (reader.Read())
+                        {
+                            writer.WriteStartElement("Row");
+                            writer.WriteAttributeString("okpo", okpos[i].ToString());
+                            writer.WriteAttributeString("id", reader["id"].ToString());
+                            writer.WriteEndElement();
+
+                            progressPercentage = Convert.ToInt32(((double)i / okposCount) * 100);
+                            (sender as BackgroundWorker).ReportProgress(progressPercentage);
+                        }
                     }
                 }
-                progress.Value++;
-            }
-                    
-            connection.Close();
 
-            writer.WriteLine("]");
-            writer.Close();
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
+            }
+
+            connection.Close();
         }
     }
 }

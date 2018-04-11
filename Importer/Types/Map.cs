@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Importer.Types
+﻿namespace Importer.Types
 {
     class Map
     {
-        public string key;
-        public string vlue;
+        public string Key { get; set; }
+        public string Value { get; set; }
+
+        public Map(string key, string value)
+        {
+            Key = key;
+            Value = value;
+        }
     }
 }
