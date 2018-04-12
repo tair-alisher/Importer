@@ -21,11 +21,14 @@ namespace Importer
         List<string> templatesPath = new List<string>();
         List<string> csvLines;
 
+        Dictionary<string, string> staticData;
+
         int okpoRowPosition;
         int soateRowPosition;
 
         string csvFilename;
-        public static int sectionId = 0;
+        private static int sectionId = 0;
+        private static int sectionNumber = 1;
 
         public MainWindow()
         {
@@ -53,7 +56,7 @@ namespace Importer
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Filter = "Csv files (*.csv)|*.csv";
-            dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyComputer);
+            dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
             if (dialog.ShowDialog() == true)
                 csvFilePath.Text = dialog.FileName;
@@ -82,10 +85,20 @@ namespace Importer
 
             int dsdIndex = dsdMonikerStackPanel.Children.Count;
             dsdMonikerStackPanel.Children.Insert(dsdIndex, dsdMonikerTxtBox);
+
+            Label sectionNumberLbl = new Label();
+            MainWindow.sectionNumber++;
+            sectionNumberLbl.Content = MainWindow.sectionNumber.ToString();
+            sectionNumberLbl.Height = 23;
+            sectionNumberLbl.Width = 27;
+            sectionNumberLbl.Margin = new Thickness(0, 0, 0, 5);
+
+            int sectionNumberIndex = sectionNumberStackPanel.Children.Count;
+            sectionNumberStackPanel.Children.Insert(sectionNumberIndex, sectionNumberLbl);
         }
 
         private void importBtn_Click(object sender, RoutedEventArgs e)
-        {
+        {                
             try
             {
                 this.okpoRowPosition = int.Parse(okpoPosition.Text);
@@ -132,40 +145,52 @@ namespace Importer
         {
             senderStatusLbl.Content = "ok";
 
-            if (xmlTemplates.Items.Count <= 0)
-                MessageBox.Show("Укажите шаблоны разделов");
-
             XmlFormer xmlFormer = new XmlFormer(csvLines);
 
             xmlFormer.okpoRowPosition = this.okpoRowPosition;
             xmlFormer.soateRowPosition = this.soateRowPosition;
-            xmlFormer.FormId = Convert.ToInt32(formId.Text);
-            xmlFormer.PeriodType = Convert.ToInt32(period.Text);
+            xmlFormer.FormId = formId.Text;
+            xmlFormer.Period = period.Text;
 
-            List<int> sectionIds;
-            List<string> dsdMonikers;
+            List<string> sectionIds = new List<string>();
+            List<string> dsdMonikers = new List<string>();
 
-        }
-
-        private void testBtn_Click(object sender, RoutedEventArgs e)
-        {
-            List<int> result = new List<int>();
-            foreach (UIElement txtBox in sectionIdsStackPanel.Children)
+            foreach (UIElement sectionId in sectionIdsStackPanel.Children)
             {
                 try
                 {
-                    int value = Convert.ToInt32(((TextBox)txtBox).Text);
-                    result.Add(value);
-                } catch (FormatException)
-                {
-                    continue;
-                }
-
-                foreach (int item in result)
-                {
-                    Console.WriteLine(item);
-                }
+                    sectionIds.Add(((TextBox) sectionId).Text);
+                } catch (FormatException) { continue; }
             }
+
+            foreach (UIElement dsdMoniker in dsdMonikerStackPanel.Children)
+            {
+                try
+                {
+                    dsdMonikers.Add(((TextBox) dsdMoniker).Text);
+                } catch (FormatException) { continue; }
+            }
+
+            xmlFormer.SectionIds = sectionIds;
+            xmlFormer.DsdMonikers = dsdMonikers;
+
+            this.staticData = xmlFormer.FormStaticData();
+
+            BackgroundWorker xmlWorker = new BackgroundWorker();
+            xmlDataProgressBar.Value = 0;
+            xmlWorker.WorkerReportsProgress = true;
+            xmlWorker.DoWork += xmlFormer.worker_DoWork;
+            xmlWorker.ProgressChanged += (senderObject, arguments) =>
+            {
+                xmlDataProgressBar.Value = arguments.ProgressPercentage;
+            };
+            xmlWorker.RunWorkerCompleted += worker_RunImportWorker;
+            xmlWorker.RunWorkerAsync();
+        }
+
+        private void worker_RunImportWorker(object sender, RunWorkerCompletedEventArgs e)
+        {
+            xmldataStatusLbl.Content = "ok";
         }
     }
 }

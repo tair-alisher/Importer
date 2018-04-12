@@ -10,7 +10,7 @@ namespace Importer.Main
 {
     class Csv
     {
-        private List<string> lines = new List<string>();
+        private List<string> lines;
 
         public Csv(string file)
         {

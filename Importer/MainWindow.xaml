@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Importer"
         mc:Ignorable="d"
-        Title="Импорт" Height="600" Width="655">
+        Title="Импорт" Height="600" Width="670">
     <Grid>
-        <GridSplitter HorizontalAlignment="Left" Height="569" Margin="262,0,0,0" VerticalAlignment="Top" Width="5" IsEnabled="False"/>
+        <GridSplitter HorizontalAlignment="Left" Height="569" Margin="271,0,0,0" VerticalAlignment="Top" Width="5" IsEnabled="False"/>
         <Button x:Name="templatesBtn" Content="Указать шаблоны разделов" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="247" Click="templatesBtn_Click"/>
         <Button x:Name="csvFileBtn" Content="Указать csv файл" HorizontalAlignment="Left" Margin="10,227,0,0" VerticalAlignment="Top" Width="247" Click="csvFileBtn_Click"/>
         <TextBox x:Name="csvFilePath" HorizontalAlignment="Left" Height="23" Margin="10,252,0,0" VerticalAlignment="Top" Width="247"/>
@@ -18,23 +18,25 @@
         <Label Content="Период" HorizontalAlignment="Left" Margin="17,328,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="period" HorizontalAlignment="Left" Height="23" Margin="167,328,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="85"/>
 
-        <Grid x:Name="sectionsGrid" HorizontalAlignment="Left" Height="549" Margin="272,10,0,0" VerticalAlignment="Top" Width="360">
+        <Grid x:Name="sectionsGrid" HorizontalAlignment="Left" Height="549" Margin="281,7,0,0" VerticalAlignment="Top" Width="371">
             <Label Content="Разделы" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" FontWeight="Bold"/>
-            
-            <Label Content="Id" HorizontalAlignment="Left" Margin="50,31,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.6,0.538"/>
-            <Label Content="DsdMoniker" HorizontalAlignment="Left" Margin="215,31,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.473,0.5"/>
+
+            <Label Content="Id" HorizontalAlignment="Left" Margin="66,31,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.6,0.538"/>
+            <Label Content="DsdMoniker" HorizontalAlignment="Left" Margin="231,31,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.473,0.5"/>
             <Button x:Name="addSectionBtn" Content="Добавить раздел" HorizontalAlignment="Left" Margin="231,3,0,0" VerticalAlignment="Top" Width="119" Click="addSectionBtn_Click"/>
 
-            <StackPanel x:Name="sectionIdsStackPanel" HorizontalAlignment="Left" Height="460" Margin="10,57,0,0" VerticalAlignment="Top" Width="105">
+            <StackPanel x:Name="sectionIdsStackPanel" HorizontalAlignment="Left" Height="460" Margin="22,57,0,0" VerticalAlignment="Top" Width="105">
                 <TextBox x:Name="sectionId1" HorizontalAlignment="Left" Height="23" Margin="0,0,0,5" TextWrapping="Wrap" VerticalAlignment="Top" Width="105"/>
             </StackPanel>
 
-            <StackPanel x:Name="dsdMonikerStackPanel" HorizontalAlignment="Left" Height="460" Margin="130,57,0,0" VerticalAlignment="Top" Width="219">
+            <StackPanel x:Name="dsdMonikerStackPanel" HorizontalAlignment="Left" Height="460" Margin="142,57,0,0" VerticalAlignment="Top" Width="219">
                 <TextBox x:Name="dsdMoniker1" HorizontalAlignment="Left" Height="23" Margin="0,0,0,5" TextWrapping="Wrap" VerticalAlignment="Top" Width="218"/>
             </StackPanel>
             <Button x:Name="importBtn" Content="Импортировать" HorizontalAlignment="Left" Margin="241,517,0,0" VerticalAlignment="Top" Width="110" Click="importBtn_Click" FontWeight="Bold" Cursor="Hand" Background="#FFE6E6E6" Height="25"/>
-            
-            <Button x:Name="testBtn" Content="Test" HorizontalAlignment="Left" Margin="139,3,0,0" VerticalAlignment="Top" Width="75" Click="testBtn_Click"/>
+
+            <StackPanel x:Name="sectionNumberStackPanel" HorizontalAlignment="Left" Height="460" Margin="-5,57,0,0" VerticalAlignment="Top" Width="27">
+                <Label Content="1" HorizontalAlignment="Left" Height="23" Margin="0,0,0,5" Width="27"/>
+            </StackPanel>
         </Grid>
 
         <Label Content="Позиция ОКПО в строке" HorizontalAlignment="Left" Margin="17,356,0,0" VerticalAlignment="Top"/>
