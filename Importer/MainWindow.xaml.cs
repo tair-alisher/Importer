@@ -147,7 +147,12 @@ namespace Importer
         {
             senderStatusLbl.Content = "ok";
 
-            XmlFormer xmlFormer = new XmlFormer(csvLines)
+            List<string> xmlFiles = new List<string>();
+
+            foreach (object item in xmlTemplates.Items)
+                xmlFiles.Add(item.ToString());
+
+            XmlFormer xmlFormer = new XmlFormer(csvLines, xmlFiles)
             {
                 okpoRowPosition = this.okpoRowPosition,
                 soateRowPosition = this.soateRowPosition,

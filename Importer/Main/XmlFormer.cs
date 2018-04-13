@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace Importer.Main
@@ -12,6 +12,7 @@ namespace Importer.Main
     class XmlFormer
     {
         List<string> lines;
+        List<string> xmlFiles;
 
         public int okpoRowPosition { get; set; }
         public int soateRowPosition { get; set; }
@@ -24,13 +25,14 @@ namespace Importer.Main
 
         Dictionary<string, string> xmlHeaderMap = new Dictionary<string, string>()
         {
-            { "%receiverid%", "" },
-            { "%senderid%", "" }
+            { "%REC%", "" },
+            { "%SENDER%", "" }
         };
 
-        public XmlFormer(List<string> lines)
+        public XmlFormer(List<string> lines, List<string> xmlFiles)
         {
             this.lines = lines;
+            this.xmlFiles = xmlFiles;
         }
 
         private Dictionary<string, string> FormStaticData()
@@ -57,43 +59,79 @@ namespace Importer.Main
             return staticData;
         }
 
-        private Dictionary<string, string> FormGetSenderIdByOkpo()
+        private Dictionary<string, string> FormMap(string filePath)
         {
-            Dictionary<string, string> GetSenderIdByOkpo = new Dictionary<string, string>();
+            Dictionary<string, string> map = new Dictionary<string, string>();
 
-            string senderIdentifierFilePath = String.Format(@"{0}Files\sender_identifiers.xml", AppDomain.CurrentDomain.BaseDirectory);
+            string mapFilePath = String.Format(filePath);
             XmlDocument xmlDocument = new XmlDocument();
-            xmlDocument.Load(senderIdentifierFilePath);
+            xmlDocument.Load(mapFilePath);
 
             XmlNodeList rows = xmlDocument.DocumentElement.SelectNodes("/Rows/Row");
 
             foreach (XmlNode row in rows)
-                GetSenderIdByOkpo.Add(
+                map.Add(
                     row.Attributes["key"].Value,
                     row.Attributes["value"].Value
                     );
 
-            return GetSenderIdByOkpo;
+            return map;
+        }
+
+        private string ReplaceXmlHeaderKeysWithValues(Dictionary<string, string> map, string template)
+        {
+            foreach (KeyValuePair<string, string> item in map)
+                template = template.Replace(item.Key, item.Value);
+            return template;
+        }
+
+        private string ReplaceXmlBodyKeysWithValues(Dictionary<string, string> map, string template)
+        {
+            string value;
+            foreach (KeyValuePair<string, string> item in map)
+                if (template.Contains(item.Key))
+                {
+                    value = (item.Value == "0" || item.Value == "0.0") ? "" : item.Value;
+                    template = template.Replace(item.Key, value);
+                }
+            return template;
         }
 
         public void worker_DoWork(Object sender, DoWorkEventArgs e)
         {
             Dictionary<string, string> staticData = this.FormStaticData();
 
+            string soate;
+            string code;
+            string okpo;
+            string xmlTemplate;
+            string okpoTemplate;
+            List<string> row;
             foreach (string line in lines)
             {
-                string[] row = line.Split(',');
+                row = line.Split(',').ToList();
 
-                Dictionary<string, string> GetSenderIdByOkpo = this.FormGetSenderIdByOkpo();
+                string senderIdentifiersFilePath = String.Format(@"{0}Files\sender_identifiers.xml", AppDomain.CurrentDomain.BaseDirectory);
+                Dictionary<string, string> GetSenderIdByOkpo = this.FormMap(senderIdentifiersFilePath);
 
-                string soate = row[soateRowPosition];
-                string code = soate.Substring(3, 5);
-                xmlHeaderMap["%receiverid%"] = ReceiversData.GetReceiverDataByCode[code]["id"];
+                string mapFilePath = String.Format(@"{0}files\map.xml", AppDomain.CurrentDomain.BaseDirectory);
+                Dictionary<string, string> xmlBodyMap = this.FormMap(mapFilePath);
 
-                string okpo = row[okpoRowPosition];
-                xmlHeaderMap["%senderid%"] = GetSenderIdByOkpo[okpo];
+                soate = row[soateRowPosition];
+                code = soate.Substring(3, 5);
+                xmlHeaderMap["%REC%"] = ReceiversData.GetReceiverDataByCode[code]["id"];
 
+                okpo = row[okpoRowPosition];
+                xmlHeaderMap["%SENDER%"] = GetSenderIdByOkpo[okpo];
 
+                foreach (string xmlFile in xmlFiles)
+                {
+                    using (StreamReader reader = new StreamReader(xmlFile, Encoding.UTF8))
+                        xmlTemplate = reader.ReadToEnd();
+
+                    okpoTemplate = ReplaceXmlHeaderKeysWithValues(xmlHeaderMap, xmlTemplate);
+                    okpoTemplate = ReplaceXmlBodyKeysWithValues(xmlBodyMap, okpoTemplate);
+                }
             }
         }
     }
