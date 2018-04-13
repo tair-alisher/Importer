@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Importer.Main
 {
@@ -21,12 +22,18 @@ namespace Importer.Main
         public List<string> SectionIds { get; set; }
         public List<string> DsdMonikers { get; set; }
 
+        Dictionary<string, string> xmlHeaderMap = new Dictionary<string, string>()
+        {
+            { "%receiverid%", "" },
+            { "%senderid%", "" }
+        };
+
         public XmlFormer(List<string> lines)
         {
             this.lines = lines;
         }
 
-        public Dictionary<string, string> FormStaticData()
+        private Dictionary<string, string> FormStaticData()
         {
             string datetime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
@@ -50,11 +57,44 @@ namespace Importer.Main
             return staticData;
         }
 
-        public void worker_DoWork(Object sender, DoWorkEventArgs e)
+        private Dictionary<string, string> FormGetSenderIdByOkpo()
         {
-            
+            Dictionary<string, string> GetSenderIdByOkpo = new Dictionary<string, string>();
+
+            string senderIdentifierFilePath = String.Format(@"{0}Files\sender_identifiers.xml", AppDomain.CurrentDomain.BaseDirectory);
+            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument.Load(senderIdentifierFilePath);
+
+            XmlNodeList rows = xmlDocument.DocumentElement.SelectNodes("/Rows/Row");
+
+            foreach (XmlNode row in rows)
+                GetSenderIdByOkpo.Add(
+                    row.Attributes["key"].Value,
+                    row.Attributes["value"].Value
+                    );
+
+            return GetSenderIdByOkpo;
         }
 
-        
+        public void worker_DoWork(Object sender, DoWorkEventArgs e)
+        {
+            Dictionary<string, string> staticData = this.FormStaticData();
+
+            foreach (string line in lines)
+            {
+                string[] row = line.Split(',');
+
+                Dictionary<string, string> GetSenderIdByOkpo = this.FormGetSenderIdByOkpo();
+
+                string soate = row[soateRowPosition];
+                string code = soate.Substring(3, 5);
+                xmlHeaderMap["%receiverid%"] = ReceiversData.GetReceiverDataByCode[code]["id"];
+
+                string okpo = row[okpoRowPosition];
+                xmlHeaderMap["%senderid%"] = GetSenderIdByOkpo[okpo];
+
+
+            }
+        }
     }
 }

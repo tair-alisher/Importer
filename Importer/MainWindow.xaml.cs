@@ -18,6 +18,7 @@ namespace Importer
     /// </summary>
     public partial class MainWindow : Window
     {
+        private static readonly int MaxSectionsCount = 16;
         List<string> templatesPath = new List<string>();
         List<string> csvLines;
 
@@ -54,9 +55,11 @@ namespace Importer
 
         private void csvFileBtn_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog dialog = new OpenFileDialog();
-            dialog.Filter = "Csv files (*.csv)|*.csv";
-            dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            OpenFileDialog dialog = new OpenFileDialog()
+            {
+                Filter = "Csv files (*.csv)|*.csv",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            };
 
             if (dialog.ShowDialog() == true)
                 csvFilePath.Text = dialog.FileName;
@@ -65,40 +68,39 @@ namespace Importer
 
         private void addSectionBtn_Click(object sender, RoutedEventArgs e)
         {
-            TextBox sectionIdTxtBox = new TextBox();
             MainWindow.sectionId++;
-            sectionIdTxtBox.Name = $"sectionId{MainWindow.sectionId}";
-            sectionIdTxtBox.HorizontalAlignment = HorizontalAlignment.Left;
-            sectionIdTxtBox.Height = 23;
-            sectionIdTxtBox.Width = 105;
-            sectionIdTxtBox.Margin = new Thickness(0, 0, 0, 5);
+            string sectionIdTextBoxName = $"sectionId{MainWindow.sectionId}";
+            double sectionIdTextBoxWidth = 105;
+            TextBox sectionIdTextBox = this.CreateTextBox(sectionIdTextBoxName, sectionIdTextBoxWidth);
 
-            int sectinoIndex = sectionIdsStackPanel.Children.Count;
-            sectionIdsStackPanel.Children.Insert(sectinoIndex, sectionIdTxtBox);
+            int sectionIndex = sectionIdsStackPanel.Children.Count;
+            sectionIdsStackPanel.Children.Insert(sectionIndex, sectionIdTextBox);
 
-            TextBox dsdMonikerTxtBox = new TextBox();
-            dsdMonikerTxtBox.Name = $"dsdMoniker{MainWindow.sectionId}";
-            dsdMonikerTxtBox.HorizontalAlignment = HorizontalAlignment.Left;
-            dsdMonikerTxtBox.Height = 23;
-            dsdMonikerTxtBox.Width = 219;
-            dsdMonikerTxtBox.Margin = new Thickness(0, 0, 0, 5);
+            string dsdMonikerTextBoxName = $"dsdMoniker{MainWindow.sectionId}";
+            double dsdMonikerTextBoxWidth = 219;
+            TextBox dsdMonikerTextBox = this.CreateTextBox(dsdMonikerTextBoxName, dsdMonikerTextBoxWidth);
 
             int dsdIndex = dsdMonikerStackPanel.Children.Count;
-            dsdMonikerStackPanel.Children.Insert(dsdIndex, dsdMonikerTxtBox);
+            dsdMonikerStackPanel.Children.Insert(dsdIndex, dsdMonikerTextBox);
 
-            Label sectionNumberLbl = new Label();
             MainWindow.sectionNumber++;
-            sectionNumberLbl.Content = MainWindow.sectionNumber.ToString();
-            sectionNumberLbl.Height = 23;
-            sectionNumberLbl.Width = 27;
-            sectionNumberLbl.Margin = new Thickness(0, 0, 0, 5);
+            Label sectionNumberLbl = new Label()
+            {
+                Content = MainWindow.sectionNumber.ToString(),
+                Height = 23,
+                Width = 27,
+                Margin = new Thickness(0, 0, 0, 5)
+            };
 
             int sectionNumberIndex = sectionNumberStackPanel.Children.Count;
             sectionNumberStackPanel.Children.Insert(sectionNumberIndex, sectionNumberLbl);
+
+            if (MainWindow.sectionNumber == MainWindow.MaxSectionsCount)
+                addSectionBtn.IsEnabled = false;
         }
 
         private void importBtn_Click(object sender, RoutedEventArgs e)
-        {                
+        {
             try
             {
                 this.okpoRowPosition = int.Parse(okpoPosition.Text);
@@ -145,12 +147,13 @@ namespace Importer
         {
             senderStatusLbl.Content = "ok";
 
-            XmlFormer xmlFormer = new XmlFormer(csvLines);
-
-            xmlFormer.okpoRowPosition = this.okpoRowPosition;
-            xmlFormer.soateRowPosition = this.soateRowPosition;
-            xmlFormer.FormId = formId.Text;
-            xmlFormer.Period = period.Text;
+            XmlFormer xmlFormer = new XmlFormer(csvLines)
+            {
+                okpoRowPosition = this.okpoRowPosition,
+                soateRowPosition = this.soateRowPosition,
+                FormId = formId.Text,
+                Period = period.Text
+            };
 
             List<string> sectionIds = new List<string>();
             List<string> dsdMonikers = new List<string>();
@@ -174,8 +177,6 @@ namespace Importer
             xmlFormer.SectionIds = sectionIds;
             xmlFormer.DsdMonikers = dsdMonikers;
 
-            this.staticData = xmlFormer.FormStaticData();
-
             BackgroundWorker xmlWorker = new BackgroundWorker();
             xmlDataProgressBar.Value = 0;
             xmlWorker.WorkerReportsProgress = true;
@@ -191,6 +192,20 @@ namespace Importer
         private void worker_RunImportWorker(object sender, RunWorkerCompletedEventArgs e)
         {
             xmldataStatusLbl.Content = "ok";
+        }
+
+        private TextBox CreateTextBox(string name, double width)
+        {
+            TextBox textBox = new TextBox()
+            {
+                Name = name,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Height = 23,
+                Width = width,
+                Margin = new Thickness(0, 0, 0, 5)
+            };
+
+            return textBox;
         }
     }
 }

@@ -55,6 +55,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Main\ReceiversData.cs" />
     <Compile Include="Main\XmlFormer.cs" />
     <Compile Include="Types\Map.cs" />
     <Page Include="MainWindow.xaml">
