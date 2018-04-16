@@ -35,10 +35,6 @@ namespace Importer.Main
                 new Dictionary<string, string>() { { "id", "11" }, { "type", "2" } }
             },
             {
-                "05258",
-                new Dictionary<string, string>() { { "id", "11" }, { "type", "2" } }
-            },
-            {
                 "04000",
                 new Dictionary<string, string>() { { "id", "12" }, { "type", "1" } }
             },

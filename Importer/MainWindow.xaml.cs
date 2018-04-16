@@ -10,6 +10,7 @@ using System.Windows.Data;
 using System.IO;
 using Importer.Main;
 using System.ComponentModel;
+using System.Xml;
 
 namespace Importer
 {
@@ -68,17 +69,58 @@ namespace Importer
 
         private void addSectionBtn_Click(object sender, RoutedEventArgs e)
         {
+            CreateSectionsUI();
+
+            if (MainWindow.sectionNumber == MainWindow.MaxSectionsCount)
+                addSectionBtn.IsEnabled = false;
+        }
+
+        private void loadSettingsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog()
+            {
+                Filter = "Xml files (*.xml)|*.xml",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            };
+            string settingsFile = "";
+            if (dialog.ShowDialog() == true)
+                settingsFile = dialog.FileName;
+
+            if (!String.IsNullOrEmpty(settingsFile))
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(settingsFile);
+
+                XmlNode config = xmlDoc.DocumentElement.SelectSingleNode("/Configuration/Config");
+
+                formId.Text = config.Attributes["formId"].Value;
+                period.Text = config.Attributes["period"].Value;
+                okpoPosition.Text = config.Attributes["okpoPosition"].Value;
+                soatePosition.Text = config.Attributes["soatePosition"].Value;
+
+                XmlNodeList sections = xmlDoc.DocumentElement.SelectNodes("/Configuration/Sections/Section");
+
+                sectionId1.Text = sections[0].Attributes["id"].Value;
+                dsdMoniker1.Text = sections[0].Attributes["dsdMoniker"].Value;
+
+                for (int i = 1; i < sections.Count; i++)
+                    CreateSectionsUI(sections[i].Attributes["id"].Value, sections[i].Attributes["dsdMoniker"].Value);
+            }
+        }
+
+        public void CreateSectionsUI(string sectionIdText = "", string dsdMonikerText = "")
+        {
             MainWindow.sectionId++;
             string sectionIdTextBoxName = $"sectionId{MainWindow.sectionId}";
             double sectionIdTextBoxWidth = 105;
-            TextBox sectionIdTextBox = this.CreateTextBox(sectionIdTextBoxName, sectionIdTextBoxWidth);
+            TextBox sectionIdTextBox = this.CreateTextBox(sectionIdTextBoxName, sectionIdTextBoxWidth, sectionIdText);
 
             int sectionIndex = sectionIdsStackPanel.Children.Count;
             sectionIdsStackPanel.Children.Insert(sectionIndex, sectionIdTextBox);
 
             string dsdMonikerTextBoxName = $"dsdMoniker{MainWindow.sectionId}";
             double dsdMonikerTextBoxWidth = 219;
-            TextBox dsdMonikerTextBox = this.CreateTextBox(dsdMonikerTextBoxName, dsdMonikerTextBoxWidth);
+            TextBox dsdMonikerTextBox = this.CreateTextBox(dsdMonikerTextBoxName, dsdMonikerTextBoxWidth, dsdMonikerText);
 
             int dsdIndex = dsdMonikerStackPanel.Children.Count;
             dsdMonikerStackPanel.Children.Insert(dsdIndex, dsdMonikerTextBox);
@@ -94,9 +136,69 @@ namespace Importer
 
             int sectionNumberIndex = sectionNumberStackPanel.Children.Count;
             sectionNumberStackPanel.Children.Insert(sectionNumberIndex, sectionNumberLbl);
+        }
 
-            if (MainWindow.sectionNumber == MainWindow.MaxSectionsCount)
-                addSectionBtn.IsEnabled = false;
+        private void saveSettingsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveDialog = new SaveFileDialog()
+            {
+                FileName = "Config",
+                DefaultExt = ".xml",
+                Filter = "Xml documents (.xml)|*.xml"
+            };
+
+            string filename = "";
+            if ((bool)saveDialog.ShowDialog())
+                filename = saveDialog.FileName;
+
+            if (!String.IsNullOrEmpty(filename))
+            {
+                string formIdValue = ((TextBox)formId).Text;
+                string periodValue = ((TextBox)period).Text;
+                string okpoPositionValue = ((TextBox)okpoPosition).Text;
+                string soatePositionValue = ((TextBox)soatePosition).Text;
+                List<string> sectionIdsList = FormSectionIdsList();
+                List<string> dsdMonikersList = FormDsdMonikersList();
+
+                XmlWriterSettings xmlSettings = XmlFormer.CustomizedXmlWriterSettingsInstance();
+
+                using (XmlWriter writer = XmlWriter.Create(filename, xmlSettings))
+                {
+                    writer.WriteStartDocument();
+                    writer.WriteStartElement("Configuration");
+
+                    writer.WriteStartElement("Config");
+                    writer.WriteAttributeString("formId", formIdValue);
+                    writer.WriteAttributeString("period", periodValue);
+                    writer.WriteAttributeString("okpoPosition", okpoPositionValue);
+                    writer.WriteAttributeString("soatePosition", soatePositionValue);
+                    writer.WriteEndElement();
+
+                    writer.WriteStartElement("Sections");
+
+                    if (sectionIdsList.Count == dsdMonikersList.Count)
+                    {
+                        for (int i = 0; i < sectionIdsList.Count; i++)
+                        {
+                            writer.WriteStartElement("Section");
+                            writer.WriteAttributeString("id", sectionIdsList[i]);
+                            writer.WriteAttributeString("dsdMoniker", dsdMonikersList[i]);
+                            writer.WriteEndElement();
+                        }
+                    }
+                    else
+                    {
+                        writer.WriteStartElement("Error");
+                        writer.WriteString("Ошибка. Количество идентификаторов разделов и показателей DsdMoniker должно быть одинаковым.");
+                        writer.WriteEndElement();
+                    }
+
+                    writer.WriteEndElement();
+
+                    writer.WriteEndElement();
+                    writer.WriteEndDocument();
+                }
+            }
         }
 
         private void importBtn_Click(object sender, RoutedEventArgs e)
@@ -160,24 +262,8 @@ namespace Importer
                 Period = period.Text
             };
 
-            List<string> sectionIds = new List<string>();
-            List<string> dsdMonikers = new List<string>();
-
-            foreach (UIElement sectionId in sectionIdsStackPanel.Children)
-            {
-                try
-                {
-                    sectionIds.Add(((TextBox) sectionId).Text);
-                } catch (FormatException) { continue; }
-            }
-
-            foreach (UIElement dsdMoniker in dsdMonikerStackPanel.Children)
-            {
-                try
-                {
-                    dsdMonikers.Add(((TextBox) dsdMoniker).Text);
-                } catch (FormatException) { continue; }
-            }
+            List<string> sectionIds = FormSectionIdsList();
+            List<string> dsdMonikers = FormDsdMonikersList();
 
             xmlFormer.SectionIds = sectionIds;
             xmlFormer.DsdMonikers = dsdMonikers;
@@ -197,9 +283,55 @@ namespace Importer
         private void worker_RunImportWorker(object sender, RunWorkerCompletedEventArgs e)
         {
             xmldataStatusLbl.Content = "ok";
+
+            Import import = new Import();
+
+            BackgroundWorker importWorker = new BackgroundWorker();
+            importProgressBar.Value = 0;
+            importWorker.WorkerReportsProgress = true;
+            importWorker.DoWork += import.ImportWorker;
+            importWorker.ProgressChanged += (senderObject, arguments) =>
+            {
+                importProgressBar.Value = arguments.ProgressPercentage;
+            };
+            importWorker.RunWorkerCompleted += OnWorkerFinish;
+            importWorker.RunWorkerAsync();
         }
 
-        private TextBox CreateTextBox(string name, double width)
+        private void OnWorkerFinish(Object sender, RunWorkerCompletedEventArgs e)
+        {
+            importStatusLbl.Content = "ok";
+        }
+
+        private List<string> FormSectionIdsList()
+        {
+            List<string> sectionIds = new List<string>();
+            foreach (UIElement sectionId in sectionIdsStackPanel.Children)
+            {
+                try
+                {
+                    sectionIds.Add(((TextBox)sectionId).Text);
+                }
+                catch (FormatException) { continue; }
+            }
+            return sectionIds;
+        }
+
+        private List<string> FormDsdMonikersList()
+        {
+            List<string> dsdMonikers = new List<string>();
+            foreach (UIElement dsdMoniker in dsdMonikerStackPanel.Children)
+            {
+                try
+                {
+                    dsdMonikers.Add(((TextBox)dsdMoniker).Text);
+                }
+                catch (FormatException) { continue; }
+            }
+            return dsdMonikers;
+        }
+
+        private TextBox CreateTextBox(string name, double width, string text = "")
         {
             TextBox textBox = new TextBox()
             {
@@ -207,7 +339,8 @@ namespace Importer
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Height = 23,
                 Width = width,
-                Margin = new Thickness(0, 0, 0, 5)
+                Margin = new Thickness(0, 0, 0, 5),
+                Text = text
             };
 
             return textBox;

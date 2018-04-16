@@ -9,21 +9,24 @@
     <Grid>
         <GridSplitter HorizontalAlignment="Left" Height="569" Margin="271,0,0,0" VerticalAlignment="Top" Width="5" IsEnabled="False"/>
         <Button x:Name="templatesBtn" Content="Указать шаблоны разделов" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="247" Click="templatesBtn_Click"/>
+        <ListBox x:Name="xmlTemplates" HorizontalAlignment="Left" Height="167" Margin="10,35,0,0" VerticalAlignment="Top" Width="247"/>
         <Button x:Name="csvFileBtn" Content="Указать csv файл" HorizontalAlignment="Left" Margin="10,227,0,0" VerticalAlignment="Top" Width="247" Click="csvFileBtn_Click"/>
         <TextBox x:Name="csvFilePath" HorizontalAlignment="Left" Height="23" Margin="10,252,0,0" VerticalAlignment="Top" Width="247"/>
-        <ListBox x:Name="xmlTemplates" HorizontalAlignment="Left" Height="167" Margin="10,35,0,0" VerticalAlignment="Top" Width="247"/>
 
         <Label Content="Id формы" HorizontalAlignment="Left" Margin="17,300,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="formId" HorizontalAlignment="Left" Height="23" Margin="167,300,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="85"/>
         <Label Content="Период" HorizontalAlignment="Left" Margin="17,328,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="period" HorizontalAlignment="Left" Height="23" Margin="167,328,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="85"/>
+        <Label Content="Позиция ОКПО в строке" HorizontalAlignment="Left" Margin="17,356,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="okpoPosition" HorizontalAlignment="Left" Height="23" Margin="167,356,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="85"/>
+        <Label Content="Позиция СОАТЕ в строке" HorizontalAlignment="Left" Margin="17,384,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="soatePosition" HorizontalAlignment="Left" Height="23" Margin="167,384,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="85"/>
 
         <Grid x:Name="sectionsGrid" HorizontalAlignment="Left" Height="549" Margin="281,7,0,0" VerticalAlignment="Top" Width="371">
             <Label Content="Разделы" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" FontWeight="Bold"/>
 
             <Label Content="Id" HorizontalAlignment="Left" Margin="66,31,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.6,0.538"/>
             <Label Content="DsdMoniker" HorizontalAlignment="Left" Margin="231,31,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.473,0.5"/>
-            <Button x:Name="addSectionBtn" Content="Добавить раздел" HorizontalAlignment="Left" Margin="231,3,0,0" VerticalAlignment="Top" Width="119" Click="addSectionBtn_Click"/>
 
             <StackPanel x:Name="sectionIdsStackPanel" HorizontalAlignment="Left" Height="460" Margin="22,57,0,0" VerticalAlignment="Top" Width="105">
                 <TextBox x:Name="sectionId1" HorizontalAlignment="Left" Height="23" Margin="0,0,0,5" TextWrapping="Wrap" VerticalAlignment="Top" Width="105"/>
@@ -37,13 +40,12 @@
             <StackPanel x:Name="sectionNumberStackPanel" HorizontalAlignment="Left" Height="460" Margin="-5,57,0,0" VerticalAlignment="Top" Width="27">
                 <Label Content="1" HorizontalAlignment="Left" Height="23" Margin="0,0,0,5" Width="27"/>
             </StackPanel>
+
+            <Button x:Name="loadSettingsBtn" Content="Загрузить настройки" HorizontalAlignment="Left" Margin="231,3,0,0" VerticalAlignment="Top" Width="129" Click="loadSettingsBtn_Click" />
+            <Button x:Name="addSectionBtn" Content="Добавить раздел" HorizontalAlignment="Left" Margin="97,3,0,0" VerticalAlignment="Top" Width="119" Click="addSectionBtn_Click" />
+            <Button x:Name="saveSettingsBtn" Content="Сохранить настройки" HorizontalAlignment="Left" Margin="22,517,0,0" VerticalAlignment="Top" Width="129" Height="25" Click="saveSettingsBtn_Click" />
+
         </Grid>
-
-        <Label Content="Позиция ОКПО в строке" HorizontalAlignment="Left" Margin="17,356,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="okpoPosition" HorizontalAlignment="Left" Height="23" Margin="167,356,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="85"/>
-
-        <Label Content="Позиция СОАТЕ в строке" HorizontalAlignment="Left" Margin="17,384,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="soatePosition" HorizontalAlignment="Left" Height="23" Margin="167,384,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="85"/>
 
         <Label Content="map.xml" HorizontalAlignment="Left" Margin="10,427,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5"/>
         <ProgressBar x:Name="csvProgressBar" HorizontalAlignment="Left" Height="10" Margin="100,436,0,0" VerticalAlignment="Top" Width="138"/>
@@ -56,5 +58,9 @@
         <Label Content="xmlData.xml" HorizontalAlignment="Left" Margin="10,473,0,0" VerticalAlignment="Top"/>
         <ProgressBar x:Name="xmlDataProgressBar" HorizontalAlignment="Left" Height="10" Margin="100,481,0,0" VerticalAlignment="Top" Width="138"/>
         <Label x:Name="xmldataStatusLbl" Content="" HorizontalAlignment="Left" Margin="238,465,0,0" VerticalAlignment="Top"/>
+        
+        <Label Content="import" HorizontalAlignment="Left" Margin="10,493,0,0" VerticalAlignment="Top"/>
+        <ProgressBar x:Name="importProgressBar" HorizontalAlignment="Left" Height="10" Margin="100,503,0,0" VerticalAlignment="Top" Width="138"/>
+        <Label x:Name="importStatusLbl" Content="" HorizontalAlignment="Left" Margin="238,493,0,0" VerticalAlignment="Top"/>
     </Grid>
 </Window>

@@ -10,7 +10,7 @@ namespace Importer.Main
 {
     class Csv
     {
-        private List<string> lines;
+        private List<string> lines = new List<string>();
 
         public Csv(string file)
         {
@@ -21,7 +21,7 @@ namespace Importer.Main
                     while (!reader.EndOfStream)
                     {
                         string line = reader.ReadLine().Replace(" ", "");
-                        lines.Add(line);
+                        this.lines.Add(line);
                     }
                 }
             } catch (System.ArgumentNullException)
@@ -41,10 +41,7 @@ namespace Importer.Main
 
             string mapFilePath = String.Format(@"{0}Files\map.xml", AppDomain.CurrentDomain.BaseDirectory);
 
-            XmlWriterSettings xmlSettings = new XmlWriterSettings();
-            xmlSettings.Indent = true;
-            xmlSettings.IndentChars = "\t";
-            xmlSettings.Encoding = Encoding.UTF8;
+            XmlWriterSettings xmlSettings = XmlFormer.CustomizedXmlWriterSettingsInstance();
 
             using (XmlWriter writer = XmlWriter.Create(mapFilePath, xmlSettings))
             {
@@ -56,7 +53,7 @@ namespace Importer.Main
                 for (int i = 0; i < rowLength; i++)
                 {
                     writer.WriteStartElement("Row");
-                    writer.WriteAttributeString("key", row[i].ToString());
+                    writer.WriteAttributeString("key", $"%{row[i]}%");
                     writer.WriteAttributeString("value", i.ToString());
                     writer.WriteEndElement();
 

@@ -60,7 +60,7 @@ namespace Importer.Main
                             writer.WriteAttributeString("id", reader["id"].ToString());
                             writer.WriteEndElement();
 
-                            progressPercentage = Convert.ToInt32(((double)i / okposCount) * 100);
+                            progressPercentage = Convert.ToInt32(((double) i+1 / okposCount) * 100);
                             (sender as BackgroundWorker).ReportProgress(progressPercentage);
                         }
                     }

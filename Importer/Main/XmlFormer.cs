@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using System.Data;
 
 namespace Importer.Main
 {
@@ -23,10 +26,11 @@ namespace Importer.Main
         public List<string> SectionIds { get; set; }
         public List<string> DsdMonikers { get; set; }
 
-        Dictionary<string, string> xmlHeaderMap = new Dictionary<string, string>()
+        public Dictionary<string, string> xmlHeaderMap = new Dictionary<string, string>()
         {
             { "%REC%", "" },
-            { "%SENDER%", "" }
+            { "%SENDER%", "" },
+            { "%TIME%", "" }
         };
 
         public XmlFormer(List<string> lines, List<string> xmlFiles)
@@ -35,8 +39,9 @@ namespace Importer.Main
             this.xmlFiles = xmlFiles;
         }
 
-        private Dictionary<string, string> FormStaticData()
+        private void FormStaticDataXmlFile()
         {
+
             string datetime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
             Dictionary<string, string> staticData = new Dictionary<string, string>()
@@ -46,20 +51,40 @@ namespace Importer.Main
                 { "Datetime", datetime }
             };
 
-            string sectionIdsRow = "";
-            foreach (string sectionId in SectionIds)
-                sectionIdsRow += sectionId;
-            staticData.Add("SectionIds", sectionIdsRow);
+            string staticDataXmlFilePath = String.Format(@"{0}Files\staticData.xml", AppDomain.CurrentDomain.BaseDirectory);
+            XmlWriterSettings xmlSettings = XmlFormer.CustomizedXmlWriterSettingsInstance();
 
-            string dsdMonikersRow = "";
-            foreach (string dsdMoniker in DsdMonikers)
-                dsdMonikersRow += dsdMoniker;
-            staticData.Add("DsdMonikers", dsdMonikersRow);
+            using (XmlWriter writer = XmlWriter.Create(staticDataXmlFilePath, xmlSettings))
+            {
+                writer.WriteStartDocument();
+                writer.WriteStartElement("Rows");
 
-            return staticData;
+                foreach (KeyValuePair<string, string> item in staticData)
+                {
+                    writer.WriteStartElement("FormInfo");
+                    writer.WriteAttributeString("key", item.Key);
+                    writer.WriteAttributeString("value", item.Value);
+                    writer.WriteEndElement();
+                }
+
+                writer.WriteStartElement("Sections");
+
+                for (int i = 0; i < SectionIds.Count; i++)
+                {
+                    writer.WriteStartElement("Section");
+                    writer.WriteAttributeString("id", SectionIds[i]);
+                    writer.WriteAttributeString("dsdMoniker", DsdMonikers[i]);
+                    writer.WriteEndElement();
+                }
+
+                writer.WriteEndElement();
+
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
+            }
         }
 
-        private Dictionary<string, string> FormMap(string filePath)
+        private Dictionary<string, string> FormMap(string filePath, string type = "map")
         {
             Dictionary<string, string> map = new Dictionary<string, string>();
 
@@ -69,50 +94,74 @@ namespace Importer.Main
 
             XmlNodeList rows = xmlDocument.DocumentElement.SelectNodes("/Rows/Row");
 
-            foreach (XmlNode row in rows)
-                map.Add(
-                    row.Attributes["key"].Value,
-                    row.Attributes["value"].Value
-                    );
+            if (type == "map")
+            {
+                foreach (XmlNode row in rows)
+                    map.Add(
+                        row.Attributes["key"].Value,
+                        row.Attributes["value"].Value
+                        );
+            }
+            else
+            {
+                foreach (XmlNode row in rows)
+                    map.Add(
+                        row.Attributes["okpo"].Value,
+                        row.Attributes["id"].Value
+                        );
+            }
 
             return map;
         }
 
-        private string ReplaceXmlHeaderKeysWithValues(Dictionary<string, string> map, string template)
+        private string ReplaceXmlHeaderKeysWithValues(string template, Dictionary<string, string> map)
         {
             foreach (KeyValuePair<string, string> item in map)
                 template = template.Replace(item.Key, item.Value);
             return template;
         }
 
-        private string ReplaceXmlBodyKeysWithValues(Dictionary<string, string> map, string template)
+        private string ReplaceXmlBodyKeysWithValues(string template, Dictionary<string, string> map, List<string> row)
         {
             string value;
+            int intItemValue;
             foreach (KeyValuePair<string, string> item in map)
+            {
                 if (template.Contains(item.Key))
                 {
-                    value = (item.Value == "0" || item.Value == "0.0") ? "" : item.Value;
+                    intItemValue = int.Parse(item.Value);
+                    value = (row[intItemValue] == "0" || row[intItemValue] == "0.0") ? "" : row[intItemValue];
                     template = template.Replace(item.Key, value);
                 }
+            }
             return template;
         }
 
         public void worker_DoWork(Object sender, DoWorkEventArgs e)
         {
-            Dictionary<string, string> staticData = this.FormStaticData();
+            this.FormStaticDataXmlFile();
+
+            SqlCommand command;
+            int progressPercentage;
+            int linesCount = lines.Count;
+
+            string connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+            SqlConnection connection = new SqlConnection(connectionString);
+            connection.Open();
 
             string soate;
             string code;
             string okpo;
             string xmlTemplate;
             string okpoTemplate;
+            int sectionCounter;
             List<string> row;
-            foreach (string line in lines)
+            for (int i = 1; i < linesCount; i++)
             {
-                row = line.Split(',').ToList();
+                row = lines[i].Split(',').ToList();
 
                 string senderIdentifiersFilePath = String.Format(@"{0}Files\sender_identifiers.xml", AppDomain.CurrentDomain.BaseDirectory);
-                Dictionary<string, string> GetSenderIdByOkpo = this.FormMap(senderIdentifiersFilePath);
+                Dictionary<string, string> GetSenderIdByOkpo = this.FormMap(senderIdentifiersFilePath, "identifiers");
 
                 string mapFilePath = String.Format(@"{0}files\map.xml", AppDomain.CurrentDomain.BaseDirectory);
                 Dictionary<string, string> xmlBodyMap = this.FormMap(mapFilePath);
@@ -124,15 +173,66 @@ namespace Importer.Main
                 okpo = row[okpoRowPosition];
                 xmlHeaderMap["%SENDER%"] = GetSenderIdByOkpo[okpo];
 
+                xmlHeaderMap["%TIME%"] = this.Period;
+
+                sectionCounter = 0;
                 foreach (string xmlFile in xmlFiles)
                 {
                     using (StreamReader reader = new StreamReader(xmlFile, Encoding.UTF8))
                         xmlTemplate = reader.ReadToEnd();
 
-                    okpoTemplate = ReplaceXmlHeaderKeysWithValues(xmlHeaderMap, xmlTemplate);
-                    okpoTemplate = ReplaceXmlBodyKeysWithValues(xmlBodyMap, okpoTemplate);
+                    okpoTemplate = ReplaceXmlHeaderKeysWithValues(xmlTemplate, xmlHeaderMap);
+                    okpoTemplate = ReplaceXmlBodyKeysWithValues(okpoTemplate, xmlBodyMap, row);
+
+                    sectionCounter++;
+                    using (command = new SqlCommand("OkpoXmlSectionsInsert", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+
+                        SqlParameter section = new SqlParameter("@section", SqlDbType.NVarChar, 150);
+                        SqlParameter xmlContent = new SqlParameter("@xmlContent", SqlDbType.Xml);
+                        SqlParameter dbOkpo = new SqlParameter("@okpo", SqlDbType.NVarChar, 50);
+
+                        section.Value = $"section_{sectionCounter}";
+                        xmlContent.Value = okpoTemplate;
+                        dbOkpo.Value = okpo;
+
+                        command.Parameters.Add(section);
+                        command.Parameters.Add(xmlContent);
+                        command.Parameters.Add(dbOkpo);
+
+                        try
+                        {
+                            connection.Open();
+                            command.ExecuteNonQuery();
+                        } catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.ToString());
+                        } finally
+                        {
+                            command.Dispose();
+                            connection.Close();
+                        }
+                    }
                 }
+
+                progressPercentage = Convert.ToInt32(((double) i+1 / linesCount) * 100);
+                (sender as BackgroundWorker).ReportProgress(progressPercentage);
             }
+
+            connection.Close();
+        }
+
+        public static XmlWriterSettings CustomizedXmlWriterSettingsInstance()
+        {
+            XmlWriterSettings xws = new XmlWriterSettings()
+            {
+                Indent = true,
+                IndentChars = "\t",
+                Encoding = Encoding.UTF8
+            };
+
+            return xws;
         }
     }
 }
