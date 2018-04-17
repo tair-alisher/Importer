@@ -28,8 +28,8 @@ namespace Importer.Main
 
         public Dictionary<string, string> xmlHeaderMap = new Dictionary<string, string>()
         {
-            { "%REC%", "" },
-            { "%SENDER%", "" },
+            { "%receiverIdentifier%", "" },
+            { "%senderIdentifier%", "" },
             { "%TIME%", "" }
         };
 
@@ -59,13 +59,11 @@ namespace Importer.Main
                 writer.WriteStartDocument();
                 writer.WriteStartElement("Rows");
 
-                foreach (KeyValuePair<string, string> item in staticData)
-                {
-                    writer.WriteStartElement("FormInfo");
-                    writer.WriteAttributeString("key", item.Key);
-                    writer.WriteAttributeString("value", item.Value);
-                    writer.WriteEndElement();
-                }
+                writer.WriteStartElement("FormInfo");
+                writer.WriteAttributeString("formId", staticData["Form_ID"]);
+                writer.WriteAttributeString("period", staticData["Period"]);
+                writer.WriteAttributeString("datetime", staticData["Datetime"]);
+                writer.WriteEndElement();
 
                 writer.WriteStartElement("Sections");
 
@@ -147,7 +145,6 @@ namespace Importer.Main
 
             string connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
             SqlConnection connection = new SqlConnection(connectionString);
-            connection.Open();
 
             string soate;
             string code;
@@ -156,68 +153,92 @@ namespace Importer.Main
             string okpoTemplate;
             int sectionCounter;
             List<string> row;
-            for (int i = 1; i < linesCount; i++)
+
+            string senderIdentifiersFilePath = String.Format(@"{0}Files\sender_identifiers.xml", AppDomain.CurrentDomain.BaseDirectory);
+            Dictionary<string, string>  GetSenderIdByOkpo = this.FormMap(senderIdentifiersFilePath, "identifiers");
+
+            string mapFilePath = String.Format(@"{0}files\map.xml", AppDomain.CurrentDomain.BaseDirectory);
+            Dictionary<string, string>  xmlBodyMap = this.FormMap(mapFilePath);
+
+            string dataFilePath = String.Format(@"{0}Files\data.xml", AppDomain.CurrentDomain.BaseDirectory);
+            XmlWriterSettings xmlSettings = XmlFormer.CustomizedXmlWriterSettingsInstance();
+            using (XmlWriter writer = XmlWriter.Create(dataFilePath, xmlSettings))
             {
-                row = lines[i].Split(',').ToList();
+                writer.WriteStartDocument();
+                writer.WriteStartElement("Rows");
 
-                string senderIdentifiersFilePath = String.Format(@"{0}Files\sender_identifiers.xml", AppDomain.CurrentDomain.BaseDirectory);
-                Dictionary<string, string> GetSenderIdByOkpo = this.FormMap(senderIdentifiersFilePath, "identifiers");
-
-                string mapFilePath = String.Format(@"{0}files\map.xml", AppDomain.CurrentDomain.BaseDirectory);
-                Dictionary<string, string> xmlBodyMap = this.FormMap(mapFilePath);
-
-                soate = row[soateRowPosition];
-                code = soate.Substring(3, 5);
-                xmlHeaderMap["%REC%"] = ReceiversData.GetReceiverDataByCode[code]["id"];
-
-                okpo = row[okpoRowPosition];
-                xmlHeaderMap["%SENDER%"] = GetSenderIdByOkpo[okpo];
-
-                xmlHeaderMap["%TIME%"] = this.Period;
-
-                sectionCounter = 0;
-                foreach (string xmlFile in xmlFiles)
+                for (int i = 1; i < linesCount; i++)
                 {
-                    using (StreamReader reader = new StreamReader(xmlFile, Encoding.UTF8))
-                        xmlTemplate = reader.ReadToEnd();
+                    row = lines[i].Split(',').ToList();
 
-                    okpoTemplate = ReplaceXmlHeaderKeysWithValues(xmlTemplate, xmlHeaderMap);
-                    okpoTemplate = ReplaceXmlBodyKeysWithValues(okpoTemplate, xmlBodyMap, row);
+                    soate = row[soateRowPosition];
+                    code = soate.Substring(3, 5);
+                    xmlHeaderMap["%receiverIdentifier%"] = ReceiversData.GetReceiverDataByCode[code]["id"];
 
-                    sectionCounter++;
-                    using (command = new SqlCommand("OkpoXmlSectionsInsert", connection))
+                    okpo = row[okpoRowPosition];
+                    xmlHeaderMap["%senderIdentifier%"] = GetSenderIdByOkpo[okpo];
+
+                    xmlHeaderMap["%TIME%"] = this.Period;
+
+                    writer.WriteStartElement("Row");
+                    writer.WriteAttributeString("okpo", okpo);
+                    writer.WriteAttributeString("soate", soate);
+                    writer.WriteAttributeString("user_id", xmlHeaderMap["%senderIdentifier%"]);
+                    writer.WriteAttributeString("departmentType", ReceiversData.GetReceiverDataByCode[code]["type"]);
+                    writer.WriteEndElement(); // </Row>
+
+                    sectionCounter = 0;
+                    foreach (string xmlFile in xmlFiles)
                     {
-                        command.CommandType = CommandType.StoredProcedure;
+                        using (StreamReader reader = new StreamReader(xmlFile, Encoding.UTF8))
+                            xmlTemplate = reader.ReadToEnd();
 
-                        SqlParameter section = new SqlParameter("@section", SqlDbType.NVarChar, 150);
-                        SqlParameter xmlContent = new SqlParameter("@xmlContent", SqlDbType.Xml);
-                        SqlParameter dbOkpo = new SqlParameter("@okpo", SqlDbType.NVarChar, 50);
+                        okpoTemplate = ReplaceXmlHeaderKeysWithValues(xmlTemplate, xmlHeaderMap);
+                        okpoTemplate = ReplaceXmlBodyKeysWithValues(okpoTemplate, xmlBodyMap, row);
 
-                        section.Value = $"section_{sectionCounter}";
-                        xmlContent.Value = okpoTemplate;
-                        dbOkpo.Value = okpo;
-
-                        command.Parameters.Add(section);
-                        command.Parameters.Add(xmlContent);
-                        command.Parameters.Add(dbOkpo);
-
-                        try
+                        sectionCounter++;
+                        using (command = new SqlCommand("OkpoXmlSectionsInsert", connection))
                         {
-                            connection.Open();
-                            command.ExecuteNonQuery();
-                        } catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.ToString());
-                        } finally
-                        {
-                            command.Dispose();
-                            connection.Close();
+                            command.CommandType = CommandType.StoredProcedure;
+
+                            SqlParameter section = new SqlParameter("@section", SqlDbType.NVarChar, 150);
+                            SqlParameter xmlContent = new SqlParameter("@xmlContent", SqlDbType.Xml);
+                            SqlParameter dbOkpo = new SqlParameter("@okpo", SqlDbType.NVarChar, 50);
+
+                            section.Value = $"section_{sectionCounter}";
+                            xmlContent.Value = okpoTemplate;
+                            dbOkpo.Value = okpo;
+
+                            command.Parameters.Add(section);
+                            command.Parameters.Add(xmlContent);
+                            command.Parameters.Add(dbOkpo);
+
+                            try
+                            {
+                                connection.Open();
+                                command.ExecuteNonQuery();
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine();
+                                Console.WriteLine(ex.ToString());
+                                Console.WriteLine();
+                            }
+                            finally
+                            {
+                                command.Dispose();
+                                connection.Close();
+                            }
                         }
+
                     }
+
+                    progressPercentage = Convert.ToInt32(((double)i + 1 / linesCount) * 100);
+                    (sender as BackgroundWorker).ReportProgress(progressPercentage);
                 }
 
-                progressPercentage = Convert.ToInt32(((double) i+1 / linesCount) * 100);
-                (sender as BackgroundWorker).ReportProgress(progressPercentage);
+                writer.WriteEndElement(); // </Rows>
+                writer.WriteEndDocument();
             }
 
             connection.Close();
