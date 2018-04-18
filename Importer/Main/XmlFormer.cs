@@ -52,7 +52,7 @@ namespace Importer.Main
             };
 
             string staticDataXmlFilePath = String.Format(@"{0}Files\staticData.xml", AppDomain.CurrentDomain.BaseDirectory);
-            XmlWriterSettings xmlSettings = XmlFormer.CustomizedXmlWriterSettingsInstance();
+            XmlWriterSettings xmlSettings = Main.CustomizedXmlWriterSettingsInstance();
 
             using (XmlWriter writer = XmlWriter.Create(staticDataXmlFilePath, xmlSettings))
             {
@@ -161,7 +161,7 @@ namespace Importer.Main
             Dictionary<string, string>  xmlBodyMap = this.FormMap(mapFilePath);
 
             string dataFilePath = String.Format(@"{0}Files\data.xml", AppDomain.CurrentDomain.BaseDirectory);
-            XmlWriterSettings xmlSettings = XmlFormer.CustomizedXmlWriterSettingsInstance();
+            XmlWriterSettings xmlSettings = Main.CustomizedXmlWriterSettingsInstance();
             using (XmlWriter writer = XmlWriter.Create(dataFilePath, xmlSettings))
             {
                 writer.WriteStartDocument();
@@ -173,7 +173,7 @@ namespace Importer.Main
 
                     soate = row[soateRowPosition];
                     code = soate.Substring(3, 5);
-                    xmlHeaderMap["%receiverIdentifier%"] = ReceiversData.GetReceiverDataByCode[code]["id"];
+                    xmlHeaderMap["%receiverIdentifier%"] = Main.GetReceiverDataByCode[code]["id"];
 
                     okpo = row[okpoRowPosition];
                     xmlHeaderMap["%senderIdentifier%"] = GetSenderIdByOkpo[okpo];
@@ -184,7 +184,7 @@ namespace Importer.Main
                     writer.WriteAttributeString("okpo", okpo);
                     writer.WriteAttributeString("soate", soate);
                     writer.WriteAttributeString("user_id", xmlHeaderMap["%senderIdentifier%"]);
-                    writer.WriteAttributeString("departmentType", ReceiversData.GetReceiverDataByCode[code]["type"]);
+                    writer.WriteAttributeString("departmentType", Main.GetReceiverDataByCode[code]["type"]);
                     writer.WriteEndElement(); // </Row>
 
                     sectionCounter = 0;
@@ -220,9 +220,7 @@ namespace Importer.Main
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine();
-                                Console.WriteLine(ex.ToString());
-                                Console.WriteLine();
+                                Main.AppendTextToFile(ex.ToString());
                             }
                             finally
                             {
@@ -233,27 +231,17 @@ namespace Importer.Main
 
                     }
 
-                    progressPercentage = Convert.ToInt32(((double)i + 1 / linesCount) * 100);
+                    progressPercentage = Convert.ToInt32(((double)i / linesCount) * 100);
                     (sender as BackgroundWorker).ReportProgress(progressPercentage);
                 }
+
+                (sender as BackgroundWorker).ReportProgress(100);
 
                 writer.WriteEndElement(); // </Rows>
                 writer.WriteEndDocument();
             }
 
             connection.Close();
-        }
-
-        public static XmlWriterSettings CustomizedXmlWriterSettingsInstance()
-        {
-            XmlWriterSettings xws = new XmlWriterSettings()
-            {
-                Indent = true,
-                IndentChars = "\t",
-                Encoding = Encoding.UTF8
-            };
-
-            return xws;
         }
     }
 }

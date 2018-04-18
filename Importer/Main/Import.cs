@@ -46,6 +46,7 @@ namespace Importer.Main
             command = new SqlCommand(lastMessagesIdSelectQuery, uploadConnection);
 
             string okpo;
+            string xml;
             int lastUsersInfoId = 0;
             int lastMessagesStatusesId = 0;
             int sectionCounter = 0;
@@ -63,14 +64,11 @@ namespace Importer.Main
                     try
                     {
                         uploadConnection.Open();
-                        insertCommand.ExecuteNonQuery();
                         lastUsersInfoId = Convert.ToInt32(insertCommand.ExecuteScalar());
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine();
-                        Console.WriteLine(ex.ToString());
-                        Console.WriteLine();
+                        Main.AppendTextToFile(ex.ToString());
                     }
                     finally
                     {
@@ -95,14 +93,11 @@ namespace Importer.Main
                     try
                     {
                         uploadConnection.Open();
-                        insertCommand.ExecuteNonQuery();
                         lastMessagesStatusesId = Convert.ToInt32(insertCommand.ExecuteScalar());
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine();
-                        Console.WriteLine(ex.ToString());
-                        Console.WriteLine();
+                        Main.AppendTextToFile(ex.ToString());
                     }
                     finally
                     {
@@ -126,9 +121,7 @@ namespace Importer.Main
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine();
-                        Console.WriteLine(ex.ToString());
-                        Console.WriteLine();
+                        Main.AppendTextToFile(ex.ToString());
                     }
                     finally
                     {
@@ -159,7 +152,7 @@ namespace Importer.Main
                             insertCommand.Connection = uploadConnection;
                             insertCommand.CommandType = CommandType.Text;
 
-                            string xml = selectReader["xml"].ToString().Replace("%messageIdentifier%", lastMessagesId);
+                            xml = selectReader["xml"].ToString().Replace("%messageIdentifier%", lastMessagesId);
 
                             insertCommand.Parameters.AddWithValue("@messageXml", xml);
                             insertCommand.Parameters.AddWithValue("@sectionId", sectionsInfo[sectionCounter]["id"]);
@@ -173,9 +166,7 @@ namespace Importer.Main
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine();
-                                Console.WriteLine(ex.ToString());
-                                Console.WriteLine();
+                                Main.AppendTextToFile(ex.ToString());
                             }
                             finally
                             {
@@ -187,9 +178,10 @@ namespace Importer.Main
                     }
                 }
 
-                progressPercentage = Convert.ToInt32(((double)i + 1 / usersDataCount) * 100);
+                progressPercentage = Convert.ToInt32(((double)i / usersDataCount) * 100);
                 (sender as BackgroundWorker).ReportProgress(progressPercentage);
             }
+            (sender as BackgroundWorker).ReportProgress(100);
 
             localConnection.Close();
         }

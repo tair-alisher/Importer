@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.ComponentModel;
-using System.Windows.Controls;
 using System.Xml;
 using System.Text;
 
@@ -60,11 +58,13 @@ namespace Importer.Main
                             writer.WriteAttributeString("id", reader["id"].ToString());
                             writer.WriteEndElement();
 
-                            progressPercentage = Convert.ToInt32(((double) i+1 / okposCount) * 100);
+                            progressPercentage = Convert.ToInt32(((double) i / okposCount) * 100);
                             (sender as BackgroundWorker).ReportProgress(progressPercentage);
                         }
                     }
                 }
+
+                (sender as BackgroundWorker).ReportProgress(100);
 
                 writer.WriteEndElement();
                 writer.WriteEndDocument();

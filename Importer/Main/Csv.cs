@@ -41,7 +41,7 @@ namespace Importer.Main
 
             string mapFilePath = String.Format(@"{0}Files\map.xml", AppDomain.CurrentDomain.BaseDirectory);
 
-            XmlWriterSettings xmlSettings = XmlFormer.CustomizedXmlWriterSettingsInstance();
+            XmlWriterSettings xmlSettings = Main.CustomizedXmlWriterSettingsInstance();
 
             using (XmlWriter writer = XmlWriter.Create(mapFilePath, xmlSettings))
             {

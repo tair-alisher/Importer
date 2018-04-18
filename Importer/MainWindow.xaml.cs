@@ -1,13 +1,8 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.IO;
 using Importer.Main;
 using System.ComponentModel;
 using System.Xml;
@@ -22,8 +17,6 @@ namespace Importer
         private static readonly int MaxSectionsCount = 16;
         List<string> templatesPath = new List<string>();
         List<string> csvLines;
-
-        Dictionary<string, string> staticData;
 
         int okpoRowPosition;
         int soateRowPosition;
@@ -42,7 +35,7 @@ namespace Importer
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Multiselect = true;
             dialog.Filter = "Xml files (*.xml)|*.xml";
-            dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyComputer);
+            dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
             if (dialog.ShowDialog() == true)
             {
@@ -108,7 +101,7 @@ namespace Importer
             }
         }
 
-        public void CreateSectionsUI(string sectionIdText = "", string dsdMonikerText = "")
+        private void CreateSectionsUI(string sectionIdText = "", string dsdMonikerText = "")
         {
             MainWindow.sectionId++;
             string sectionIdTextBoxName = $"sectionId{MainWindow.sectionId}";
@@ -157,10 +150,10 @@ namespace Importer
                 string periodValue = ((TextBox)period).Text;
                 string okpoPositionValue = ((TextBox)okpoPosition).Text;
                 string soatePositionValue = ((TextBox)soatePosition).Text;
-                List<string> sectionIdsList = FormSectionIdsList();
-                List<string> dsdMonikersList = FormDsdMonikersList();
+                List<string> sectionIdsList = this.FormListFromUICollection(sectionIdsStackPanel.Children);
+                List<string> dsdMonikersList = this.FormListFromUICollection(dsdMonikerStackPanel.Children);
 
-                XmlWriterSettings xmlSettings = XmlFormer.CustomizedXmlWriterSettingsInstance();
+                XmlWriterSettings xmlSettings = Main.Main.CustomizedXmlWriterSettingsInstance();
 
                 using (XmlWriter writer = XmlWriter.Create(filename, xmlSettings))
                 {
@@ -203,6 +196,11 @@ namespace Importer
 
         private void importBtn_Click(object sender, RoutedEventArgs e)
         {
+            csvProgressBar.Value = 0;
+            senderProgressBar.Value = 0;
+            xmlDataProgressBar.Value = 0;
+            importProgressBar.Value = 0;
+
             try
             {
                 this.okpoRowPosition = int.Parse(okpoPosition.Text);
@@ -216,7 +214,6 @@ namespace Importer
             Csv csv = new Csv(csvFilename);
             csvLines = csv.GetLines();
             BackgroundWorker csvWorker = new BackgroundWorker();
-            csvProgressBar.Value = 0;
             csvWorker.WorkerReportsProgress = true;
             csvWorker.DoWork += csv.worker_DoWork;
             csvWorker.ProgressChanged += (senderObject, arguments) =>
@@ -234,7 +231,6 @@ namespace Importer
             Sender senderObj = new Sender(csvLines, this.okpoRowPosition);
 
             BackgroundWorker senderWorker = new BackgroundWorker();
-            senderProgressBar.Value = 0;
             senderWorker.WorkerReportsProgress = true;
             senderWorker.DoWork += senderObj.worker_DoWork;
             senderWorker.ProgressChanged += (senderObject, arguments) =>
@@ -262,15 +258,13 @@ namespace Importer
                 Period = period.Text
             };
 
-            List<string> sectionIds = FormSectionIdsList();
-            List<string> dsdMonikers = FormDsdMonikersList();
+            List<string> sectionIdsList = this.FormListFromUICollection(sectionIdsStackPanel.Children);
+            List<string> dsdMonikersList = this.FormListFromUICollection(dsdMonikerStackPanel.Children);
 
-            xmlFormer.SectionIds = sectionIds;
-            xmlFormer.DsdMonikers = dsdMonikers;
+            xmlFormer.SectionIds = sectionIdsList;
+            xmlFormer.DsdMonikers = dsdMonikersList;
 
-            BackgroundWorker xmlWorker = new BackgroundWorker();
-            xmlDataProgressBar.Value = 0;
-            xmlWorker.WorkerReportsProgress = true;
+            BackgroundWorker xmlWorker = new BackgroundWorker() { WorkerReportsProgress = true };
             xmlWorker.DoWork += xmlFormer.worker_DoWork;
             xmlWorker.ProgressChanged += (senderObject, arguments) =>
             {
@@ -286,9 +280,7 @@ namespace Importer
 
             Import import = new Import();
 
-            BackgroundWorker importWorker = new BackgroundWorker();
-            importProgressBar.Value = 0;
-            importWorker.WorkerReportsProgress = true;
+            BackgroundWorker importWorker = new BackgroundWorker() { WorkerReportsProgress = true };
             importWorker.DoWork += import.ImportWorker;
             importWorker.ProgressChanged += (senderObject, arguments) =>
             {
@@ -301,34 +293,21 @@ namespace Importer
         private void OnWorkerFinish(Object sender, RunWorkerCompletedEventArgs e)
         {
             importStatusLbl.Content = "ok";
+            MessageBox.Show("Заврешено");
         }
 
-        private List<string> FormSectionIdsList()
+        private List<string> FormListFromUICollection(UIElementCollection elementCollection)
         {
-            List<string> sectionIds = new List<string>();
-            foreach (UIElement sectionId in sectionIdsStackPanel.Children)
+            List<string> list = new List<string>();
+            foreach (UIElement element in elementCollection)
             {
                 try
                 {
-                    sectionIds.Add(((TextBox)sectionId).Text);
+                    list.Add(((TextBox)element).Text);
                 }
                 catch (FormatException) { continue; }
             }
-            return sectionIds;
-        }
-
-        private List<string> FormDsdMonikersList()
-        {
-            List<string> dsdMonikers = new List<string>();
-            foreach (UIElement dsdMoniker in dsdMonikerStackPanel.Children)
-            {
-                try
-                {
-                    dsdMonikers.Add(((TextBox)dsdMoniker).Text);
-                }
-                catch (FormatException) { continue; }
-            }
-            return dsdMonikers;
+            return list;
         }
 
         private TextBox CreateTextBox(string name, double width, string text = "")

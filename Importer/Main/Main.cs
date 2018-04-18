@@ -1,9 +1,30 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Xml;
 
 namespace Importer.Main
 {
-    public static class ReceiversData
+    public static class Main
     {
+        public static void AppendTextToFile(string text)
+        {
+            File.AppendAllText(String.Format(@"Files\logs\logs.txt"), Environment.NewLine + text + Environment.NewLine);
+        }
+
+        public static XmlWriterSettings CustomizedXmlWriterSettingsInstance()
+        {
+            XmlWriterSettings xws = new XmlWriterSettings()
+            {
+                Indent = true,
+                IndentChars = "\t",
+                Encoding = Encoding.UTF8
+            };
+
+            return xws;
+        }
+
         public static readonly Dictionary<string, Dictionary<string, string>> GetReceiverDataByCode = new Dictionary<string, Dictionary<string, string>>()
         {
             {
