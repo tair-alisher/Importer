@@ -10,7 +10,7 @@ namespace Importer.Main
     {
         public static void AppendTextToFile(string text)
         {
-            File.AppendAllText(String.Format(@"Files\logs\logs.txt"), Environment.NewLine + text + Environment.NewLine);
+            File.AppendAllText(String.Format(@"Files\logs\logs.txt"), Environment.NewLine + (text + DateTime.Now.ToString()) + Environment.NewLine);
         }
 
         public static XmlWriterSettings CustomizedXmlWriterSettingsInstance()

@@ -15,6 +15,7 @@ namespace Importer.Main
         private static readonly string usersInfoInsertQuery = "INSERT INTO UsersInfo(OKPO,User_ID) VALUES(@okpo,@userId);SELECT SCOPE_IDENTITY()";
         private static readonly string messagesStatusesInsertQuery = "INSERT INTO MessagesStatuses(Form_ID,UsersInfo_ID,PeriodType,DepartmentType,DateTime) VALUES(@formId,@usersInfoId,@periodType,@departmentType,@dateTime);SELECT SCOPE_IDENTITY()";
         private static readonly string respondentDatasInsertQuery = "INSERT INTO RespondentDatas(MessageStatusID,SoateCode) VALUES(@messageStatusId,@soateCode);SELECT SCOPE_IDENTITY()";
+        private static readonly string formInfoInsertQuery = "INSERT INTO FormInfo(MessagesStatusesID) VALUES(@messageStatusId)";
         private static readonly string messagesInsertQuery = "INSERT INTO Messages(Message_XML,Section_ID,MessagesStatuses_ID,DSDMoniker) VALUES(@messageXml,@sectionId,@messagesStatusesId,@dsdMoniker)";
 
         public void ImportWorker(object sender, DoWorkEventArgs e)
@@ -87,7 +88,8 @@ namespace Importer.Main
                     insertCommand.Parameters.AddWithValue("@formId", formInfo["formId"]);
                     insertCommand.Parameters.AddWithValue("@usersInfoId", lastUsersInfoId);
                     insertCommand.Parameters.AddWithValue("@periodType", formInfo["period"]);
-                    insertCommand.Parameters.AddWithValue("@departmentType", usersData[i]["departmentType"]);
+                    // insertCommand.Parameters.AddWithValue("@departmentType", usersData[i]["departmentType"]);
+                    insertCommand.Parameters.AddWithValue("@departmentType", "0");
                     insertCommand.Parameters.AddWithValue("@dateTime", dateTime);
 
                     try
@@ -130,7 +132,30 @@ namespace Importer.Main
                     }
                 }
 
-                sectionCounter = 0;
+                using (insertCommand = new SqlCommand(Import.formInfoInsertQuery))
+                {
+                    insertCommand.Connection = uploadConnection;
+                    insertCommand.CommandType = CommandType.Text;
+
+                    insertCommand.Parameters.AddWithValue("@messageStatusId", lastMessagesStatusesId);
+
+                    try
+                    {
+                        uploadConnection.Open();
+                        insertCommand.ExecuteNonQuery();
+                    }
+                    catch (Exception ex)
+                    {
+                        Main.AppendTextToFile(ex.ToString());
+                    }
+                    finally
+                    {
+                        insertCommand.Dispose();
+                        uploadConnection.Close();
+                    }
+                }
+
+                    sectionCounter = 0;
                 selectCommand = new SqlCommand(Import.okpoXmlSectionsSelectQuery, localConnection);
                 selectCommand.Parameters.AddWithValue("@okpo", okpo);
                 using (selectReader = selectCommand.ExecuteReader())

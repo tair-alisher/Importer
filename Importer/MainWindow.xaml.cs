@@ -6,6 +6,8 @@ using System.Windows.Controls;
 using Importer.Main;
 using System.ComponentModel;
 using System.Xml;
+using System.Data.SqlClient;
+using System.Configuration;
 
 namespace Importer
 {

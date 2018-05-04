@@ -128,7 +128,7 @@ namespace Importer.Main
                 if (template.Contains(item.Key))
                 {
                     intItemValue = int.Parse(item.Value);
-                    value = (row[intItemValue] == "0" || row[intItemValue] == "0.0") ? "" : row[intItemValue];
+                    value = (row[intItemValue] == "None" || row[intItemValue] == "0") ? "0.0" : row[intItemValue];
                     template = template.Replace(item.Key, value);
                 }
             }
@@ -176,7 +176,14 @@ namespace Importer.Main
                     xmlHeaderMap["%receiverIdentifier%"] = Main.GetReceiverDataByCode[code]["id"];
 
                     okpo = row[okpoRowPosition];
-                    xmlHeaderMap["%senderIdentifier%"] = GetSenderIdByOkpo[okpo];
+                    try
+                    {
+                        xmlHeaderMap["%senderIdentifier%"] = GetSenderIdByOkpo[okpo];
+                    } catch (Exception ex)
+                    {
+                        Main.AppendTextToFile(ex.ToString());
+                        continue;
+                    }
 
                     xmlHeaderMap["%TIME%"] = this.Period;
 
